@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+python-dotenv
+pytest
+httpx
+groq
+youtube-transcript-api
+chromadb
+sentence-transformers

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Q&A</title>
+<style>
+:root{--bg:#f3f5f4;--surface:#fff;--ink:#16211d;--muted:#5d6b66;--line:#d5ddda;--accent:#0f6b57;--accent-ink:#fff;--warn:#9a5b00;--warn-bg:#fff3de;--err:#a32222;--err-bg:#fde8e8;--ok:#0f6b57;--ok-bg:#dff3ec;--src:#eaf1ef}
+@media (prefers-color-scheme:dark){:root{--bg:#121816;--surface:#1a2320;--ink:#e6efeb;--muted:#9aaba5;--line:#2c3a36;--accent:#4cc3a3;--accent-ink:#06231b;--warn:#f0b35a;--warn-bg:#33270f;--err:#ff9b9b;--err-bg:#3a1a1a;--ok:#4cc3a3;--ok-bg:#12302a;--src:#22302c}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,"Noto Naskh Arabic",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:24px 16px 40px}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:1.5rem;margin:0 0 2px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text],input[type=url],textarea{flex:1;min-width:0;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 18px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.status{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.title{font-weight:600;flex:1;min-width:0}
+.badge{font-size:.85rem;font-weight:600;padding:3px 10px;border-radius:99px}
+.badge.processing{background:var(--warn-bg);color:var(--warn)}
+.badge.ready{background:var(--ok-bg);color:var(--ok)}
+.badge.failed{background:var(--err-bg);color:var(--err)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-1px;margin-inline-end:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.err{background:var(--err-bg);color:var(--err);border-radius:8px;padding:10px 12px;margin-top:10px}
+.msgs{display:flex;flex-direction:column;gap:14px;max-height:55vh;overflow-y:auto;margin-bottom:12px}
+.empty{color:var(--muted);margin:0}
+.q{align-self:flex-end;background:var(--accent);color:var(--accent-ink);padding:8px 14px;border-radius:14px 14px 3px 14px;max-width:85%}
+.a{align-self:flex-start;max-width:100%}
+.a .text{white-space:pre-wrap;margin:0 0 8px}
+.src{background:var(--src);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:.92rem}
+.src a.t{font-weight:700;color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor;margin-inline-end:8px;white-space:nowrap}
+.src .srctext{color:var(--ink)}
+details{color:var(--muted);font-size:.9rem}
+details label{display:block;margin-top:8px}
+details input{width:100%;margin-top:4px}
+.chat-form{display:flex;gap:8px}
+.hidden{display:none}
+.pipe{list-style:none;display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 0;padding:0;font-size:.8rem}
+.pipe li{padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.pipe li.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pipe li.on{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.player{position:relative;padding-top:56.25%;border-radius:8px;overflow:hidden;margin-top:14px;background:#000}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.score{font-size:.78rem;color:var(--muted);margin-inline-start:auto;white-space:nowrap}
+.src{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src .srctext{flex-basis:100%}
+.note{font-size:.85rem;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:6px 10px;margin:0 0 8px}
+.tools{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:.9rem;color:var(--muted)}
+.tools select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);padding:6px 12px;font-size:.88rem;margin-inline-start:auto}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ask a YouTube video</h1>
+    <p class="sub">Paste a link, wait for processing, then ask about what’s said in it.</p>
+  </header>
+
+  <section class="panel" aria-label="Video input">
+    <div class="row">
+      <input id="url" type="url" placeholder="https://www.youtube.com/watch?v=…" aria-label="YouTube URL">
+      <button id="processBtn">Process video</button>
+    </div>
+    <div id="status" class="status hidden" style="margin-top:14px" aria-live="polite">
+      <span class="title" id="vTitle" dir="auto"></span>
+      <span class="badge" id="badge"></span>
+    </div>
+    <ol class="pipe" id="pipe" aria-label="RAG pipeline"><li>Ingest</li><li>Chunk</li><li>Embed &amp; index</li><li>Retrieve</li><li>Generate</li></ol>
+    <p class="hint hidden" id="hint"></p>
+    <div id="error" class="err hidden" role="alert"></div>
+    <div id="player" class="player hidden"><iframe id="yt" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+    <details style="margin-top:12px">
+      <summary>Connection settings</summary>
+      <label>Backend URL <input id="base" type="text" value="http://localhost:8000"></label>
+      <label><input id="mock" type="checkbox" style="width:auto"> Demo mode (no backend, fake data for screenshots)</label>
+    </details>
+  </section>
+
+  <section id="chat" class="panel hidden" aria-label="Chat">
+    <div id="msgs" class="msgs" aria-live="polite">
+      <p class="empty" id="emptyMsg">Ask your first question about the video.</p>
+    </div>
+    <div class="tools">
+      <label>Sources to retrieve (top-k)
+        <select id="topk"><option>3</option><option selected>5</option><option>8</option><option>12</option></select></label>
+      <button class="ghost" id="exportBtn" disabled>Export Q&amp;A (.md)</button>
+    </div>
+    <div class="chat-form" style="margin-top:10px">
+      <input id="q" type="text" placeholder="Ask about the video…" aria-label="Question" dir="auto" disabled>
+      <button id="askBtn" disabled>Send</button>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===== API contract (edit here if the backend differs) =====
+   POST {base}/api/videos/process            body {url}       -> {video_id, title, status, message}
+   GET  {base}/api/videos/{id}/status                         -> {video_id, title, status, error?}
+   POST {base}/api/videos/{id}/questions     body {question}  -> {answer, sources:[{text, start_seconds, end_seconds}]}
+   status: processing | ready | failed (case-insensitive) */
+const API = {
+  process: b => `${b}/api/videos/process`,
+  status: (b, id) => `${b}/api/videos/${encodeURIComponent(id)}/status`,
+  chat: (b, id) => `${b}/api/videos/${encodeURIComponent(id)}/questions`,
+};
+const POLL_MS = 2000;
+
+const $ = id => document.getElementById(id);
+let state = {videoId: null, ytId: null, status: null, asking: false, timer: null, tick: null, log: []};
+function pipe(on, done) {
+  [...$('pipe').children].forEach((li, i) => { li.className = on.includes(i) ? 'on' : done.includes(i) ? 'done' : ''; });
+}
+function embed(sec) {
+  const t = sec ? `?start=${Math.floor(sec)}&autoplay=1` : '';
+  $('yt').src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(state.ytId)}${t}`;
+  $('player').classList.remove('hidden');
+}
+function stopTick() { clearInterval(state.tick); $('hint').classList.add('hidden'); }
+function startTick() {
+  const t0 = Date.now(); stopTick();
+  const upd = () => { const h = $('hint'); h.classList.remove('hidden');
+    h.textContent = `Processing for ${Math.floor((Date.now()-t0)/1000)}s. The first video can take a few minutes (the embedding model downloads once).`; };
+  upd(); state.tick = setInterval(upd, 1000);
+}
+
+function ytIdFromUrl(u) {
+  try {
+    const x = new URL(u.trim());
+    if (x.hostname.includes('youtu.be')) return x.pathname.slice(1).split('/')[0] || null;
+    if (x.searchParams.get('v')) return x.searchParams.get('v');
+    const m = x.pathname.match(/\/(embed|shorts|live)\/([\w-]{6,})/);
+    return m ? m[2] : null;
+  } catch { return null; }
+}
+const fmt = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), r = s%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(r).padStart(2,'0'); };
+const secs = v => { if (typeof v === 'number') return v; if (typeof v === 'string' && v.includes(':')) return v.split(':').reduce((a,p)=>a*60+Number(p),0); return Number(v) || 0; };
+
+function showError(msg) { const e = $('error'); e.textContent = msg || ''; e.classList.toggle('hidden', !msg); }
+function setStatus(title, status) {
+  state.status = status;
+  $('status').classList.remove('hidden');
+  $('vTitle').textContent = title || '';
+  const b = $('badge');
+  b.className = 'badge ' + status;
+  b.innerHTML = status === 'processing' ? '<span class="spin"></span>Processing' : status === 'ready' ? 'Ready' : 'Failed';
+  const ready = status === 'ready';
+  $('chat').classList.toggle('hidden', !ready);
+  if (status === 'processing') pipe([0,1,2], []);
+  else if (ready) pipe([], [0,1,2]);
+  else pipe([], []);
+  if (status !== 'processing') stopTick();
+  if (!ready) $('player').classList.add('hidden');
+  updateAskEnabled();
+  $('processBtn').disabled = status === 'processing';
+}
+function updateAskEnabled() {
+  const ok = state.status === 'ready' && !state.asking;
+  $('q').disabled = !ok; $('askBtn').disabled = !ok;
+}
+
+/* ---- demo mode ---- */
+const mock = {
+  async process() { mock.t0 = Date.now(); return {video_id: 'demo', title: 'Demo: Introduction to Neural Networks', status: 'processing'}; },
+  async status() { const done = Date.now() - mock.t0 > 3500; return {video_id: 'demo', title: 'Demo: Introduction to Neural Networks', status: done ? 'ready' : 'processing'}; },
+  async chat(body) {
+    await new Promise(r => setTimeout(r, 900));
+    if (/error|fail/i.test(body.question)) throw new Error('Demo error: the backend returned 500.');
+    return {answer: 'A neural network learns by adjusting its weights to reduce the error between its prediction and the true answer, repeating this over many examples.',
+      sources: [{text: 'We start with random weights, then compare the output to the label and measure the loss.', start_seconds: 74, end_seconds: 98, score: 0.71},
+                {text: 'Backpropagation sends that error backwards so every weight knows how to change.', start_seconds: 131.4, end_seconds: 160, score: 0.52}]};
+  }
+};
+
+async function call(url, opts, mockFn) {
+  if ($('mock').checked) return mockFn();
+  let res;
+  try { res = await fetch(url, opts); }
+  catch { throw new Error('Cannot reach the backend at ' + $('base').value + '. Check that it is running and CORS is enabled.'); }
+  if (!res.ok) {
+    let d = ''; try { d = (await res.json()).detail || ''; } catch {}
+    const err = new Error(`Backend error ${res.status}${d ? ': ' + (typeof d === 'string' ? d : JSON.stringify(d)) : ''}`);
+    err.status = res.status; throw err;
+  }
+  return res.json();
+}
+const base = () => $('base').value.replace(/\/+$/, '');
+const norm = s => String(s || '').toLowerCase();
+
+async function processVideo() {
+  showError('');
+  clearInterval(state.timer);
+  const url = $('url').value.trim();
+  const yt = ytIdFromUrl(url);
+  if (!yt) { showError('Enter a valid YouTube link, for example https://www.youtube.com/watch?v=abc123.'); return; }
+  state.ytId = yt;
+  $('msgs').innerHTML = '<p class="empty" id="emptyMsg">Ask your first question about the video.</p>';
+  state.log = []; $('exportBtn').disabled = true;
+  setStatus('Starting…', 'processing'); startTick();
+  try {
+    const d = await call(API.process(base()), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url})}, mock.process);
+    state.videoId = d.video_id;
+    handleStatus(d);
+    if (norm(d.status) === 'processing') state.timer = setInterval(poll, POLL_MS);
+  } catch (e) { setStatus('', 'failed'); $('vTitle').textContent = 'Could not start processing'; showError(e.message); }
+}
+async function poll() {
+  try {
+    const d = await call(API.status(base(), state.videoId), {}, mock.status);
+    handleStatus(d);
+  } catch (e) { clearInterval(state.timer); setStatus($('vTitle').textContent, 'failed'); showError(e.message); }
+}
+function handleStatus(d) {
+  const s = norm(d.status) === 'ready' || norm(d.status) === 'completed' ? 'ready' : norm(d.status) === 'failed' || norm(d.status) === 'error' ? 'failed' : 'processing';
+  setStatus(d.title || state.ytId, s);
+  if (s !== 'processing') clearInterval(state.timer);
+  if (s === 'ready') embed(0);
+  if (s === 'failed') showError(d.error || 'Processing failed. Check the link or try another video.');
+}
+
+function addMsg(node) { const e = $('emptyMsg'); if (e) e.remove(); $('msgs').appendChild(node); node.scrollIntoView({block: 'nearest'}); }
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+async function ask() {
+  const question = $('q').value.trim();
+  if (!question || state.status !== 'ready' || state.asking) return;
+  showError('');
+  $('q').value = '';
+  const q = el('div', 'q', question); q.dir = 'auto'; addMsg(q);
+  const wait = el('div', 'a'); wait.innerHTML = '<span class="spin"></span>Thinking…'; addMsg(wait);
+  state.asking = true; updateAskEnabled(); pipe([3,4], [0,1,2]);
+  try {
+    const top_k = Number($('topk').value) || 5;
+    const d = await call(API.chat(base(), state.videoId), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({question, top_k})}, () => mock.chat({question}));
+    wait.innerHTML = '';
+    if (/generation is disabled|^mock answer/i.test(d.answer || ''))
+      wait.appendChild(el('p', 'note', 'Retrieval-only mode: set USE_LLM=true and GROQ_API_KEY in the backend .env to get a generated answer.'));
+    const t = el('p', 'text', d.answer || '(empty answer)'); t.dir = 'auto'; wait.appendChild(t);
+    (d.sources || []).forEach(s => {
+      const start = secs(s.start_seconds ?? s.start_time ?? s.start ?? s.timestamp);
+      const box = el('div', 'src');
+      const end = secs(s.end_seconds ?? s.end_time ?? s.end);
+      const a = el('a', 't', '▶ ' + fmt(start) + (end > start ? '–' + fmt(end) : ''));
+      a.href = `https://www.youtube.com/watch?v=${state.ytId}&t=${Math.floor(start)}s`;
+      a.target = '_blank'; a.rel = 'noopener';
+      a.title = 'Play the video from this moment';
+      a.addEventListener('click', ev => { if (!ev.ctrlKey && !ev.metaKey) { ev.preventDefault(); embed(start); $('player').scrollIntoView({behavior: 'smooth', block: 'nearest'}); } });
+      const sc = typeof s.score === 'number' ? el('span', 'score', 'similarity ' + s.score.toFixed(2)) : null;
+      const tx = el('span', 'srctext', s.text || ''); tx.dir = 'auto';
+      box.append(a, ...(sc ? [sc] : []), tx); wait.appendChild(box);
+    });
+    state.log.push({question, answer: d.answer || '', sources: d.sources || []});
+    $('exportBtn').disabled = false;
+  } catch (e) {
+    wait.remove();
+    if (e.status === 404) { setStatus($('vTitle').textContent, 'failed'); showError('The backend no longer has this video (it was probably restarted). Press “Process video” again.'); }
+    else showError(e.message);
+  }
+  finally { state.asking = false; if (state.status === 'ready') pipe([], [0,1,2,3,4]); updateAskEnabled(); $('q').focus(); }
+}
+
+function exportLog() {
+  const md = [`# Q&A: ${$('vTitle').textContent}`, `https://www.youtube.com/watch?v=${state.ytId}`, ''];
+  state.log.forEach((e, i) => {
+    md.push(`## Q${i+1}. ${e.question}`, '', e.answer, '', '**Sources**', '');
+    e.sources.forEach(s => md.push(`- [${fmt(secs(s.start_seconds ?? s.start_time))}] ${typeof s.score === 'number' ? '(similarity ' + s.score.toFixed(2) + ') ' : ''}${s.text}`));
+    md.push('');
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md.join('\n')], {type: 'text/markdown'}));
+  a.download = `qa-${state.ytId}.md`; a.click(); URL.revokeObjectURL(a.href);
+}
+$('exportBtn').addEventListener('click', exportLog);
+$('processBtn').addEventListener('click', processVideo);
+$('url').addEventListener('keydown', e => { if (e.key === 'Enter') processVideo(); });
+$('askBtn').addEventListener('click', ask);
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+</script>
+</body>
+</html>

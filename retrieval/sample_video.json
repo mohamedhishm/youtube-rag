@@ -1,0 +1,78 @@
+{
+  "video_id": "sample001",
+  "title": "How Neural Networks Learn (sample for testing)",
+  "chunks": [
+    {
+      "chunk_id": "sample001_chunk_0",
+      "text": "Hi everyone, welcome back to the channel. Today we are going to talk about how neural networks actually learn. Last week a lot of you asked about this, so let's dive right in.",
+      "start_seconds": 0.0,
+      "end_seconds": 22.5
+    },
+    {
+      "chunk_id": "sample001_chunk_1",
+      "text": "A neural network is made of layers of small units called neurons. Each neuron takes some numbers as input, multiplies each one by a weight, adds them up, and passes the result through an activation function.",
+      "start_seconds": 22.5,
+      "end_seconds": 51.0
+    },
+    {
+      "chunk_id": "sample001_chunk_2",
+      "text": "At the start, the weights are completely random, so the network's predictions are basically garbage. Learning means slowly adjusting those weights until the predictions get better.",
+      "start_seconds": 51.0,
+      "end_seconds": 78.0
+    },
+    {
+      "chunk_id": "sample001_chunk_3",
+      "text": "To know how bad a prediction is, we use a loss function. For example, mean squared error measures the average squared gap between the prediction and the correct answer. A lower loss means a better network.",
+      "start_seconds": 78.0,
+      "end_seconds": 112.0
+    },
+    {
+      "chunk_id": "sample001_chunk_4",
+      "text": "Now the key idea is gradient descent. Imagine standing on a hill in the fog and wanting to reach the valley. You feel which direction slopes downward and take a small step that way, then repeat.",
+      "start_seconds": 112.0,
+      "end_seconds": 145.5
+    },
+    {
+      "chunk_id": "sample001_chunk_5",
+      "text": "The size of each step is called the learning rate. If it is too big, you overshoot the valley and bounce around. If it is too small, training takes forever. Usually people try values like 0.001 or 0.01.",
+      "start_seconds": 145.5,
+      "end_seconds": 180.0
+    },
+    {
+      "chunk_id": "sample001_chunk_6",
+      "text": "But how do we know which direction is downhill for millions of weights? That is what backpropagation does. It uses the chain rule from calculus to work out how much each weight contributed to the error.",
+      "start_seconds": 180.0,
+      "end_seconds": 215.0
+    },
+    {
+      "chunk_id": "sample001_chunk_7",
+      "text": "One common problem is overfitting. The network memorizes the training data instead of learning general patterns, so it performs great on training examples but badly on new ones. Using a validation set helps you catch it.",
+      "start_seconds": 215.0,
+      "end_seconds": 252.0
+    },
+    {
+      "chunk_id": "sample001_chunk_8",
+      "text": "To reduce overfitting you can add more data, use dropout, which randomly switches off some neurons during training, or stop training early when the validation loss starts going up.",
+      "start_seconds": 252.0,
+      "end_seconds": 283.0
+    },
+    {
+      "chunk_id": "sample001_chunk_9",
+      "text": "Oh, and quickly, GPUs matter here. Training involves huge amounts of matrix multiplication, and graphics cards are very good at doing that in parallel, so training is much faster than on a normal CPU.",
+      "start_seconds": 283.0,
+      "end_seconds": 312.0
+    },
+    {
+      "chunk_id": "sample001_chunk_10",
+      "text": "So to recap: start with random weights, measure the loss, use backpropagation to find the gradients, and update the weights with gradient descent. Repeat this thousands of times and the network learns.",
+      "start_seconds": 312.0,
+      "end_seconds": 345.0
+    },
+    {
+      "chunk_id": "sample001_chunk_11",
+      "text": "That's it for today. If you enjoyed this video, please like and subscribe, and I will see you in the next one. Bye!",
+      "start_seconds": 345.0,
+      "end_seconds": 358.0
+    }
+  ]
+}
